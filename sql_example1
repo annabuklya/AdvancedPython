@@ -1,0 +1,34 @@
+drop table if exists egrip_names; 
+create table egrip_names as 
+select distinct
+    inn
+    , fns_entity_rk
+    ,"date"
+    ,case
+        when middle_nm isnull and first_nm notnull and last_nm notnull 
+            then last_nm || ' ' || first_nm
+        when first_nm isnull and middle_nm notnull and last_nm notnull 
+            then last_nm || ' ' || middle_nm
+        when last_nm isnull and middle_nm notnull and first_nm notnull 
+            then first_nm || ' ' || middle_nm
+        when last_nm notnull and middle_nm notnull and first_nm notnull 
+            then last_nm || ' ' || first_nm || ' ' || middle_nm
+        else coalesce(last_nm,
+                      first_nm,
+                      middle_nm)
+    end as name_fns
+    ,ogrn
+    ,self_empl_form
+    ,entity_registration_dt
+    ,status_code
+    ,termination_dt
+from
+  prod_v_dds.fns_entity_self_employed fns
+inner join
+  dates dt 
+    on dt."date" between fns.valid_from_dttm and fns.valid_to_dttm
+    --and dt."date" < '2022-06-01'
+where true
+    and inn notnull
+
+distributed by (inn, "date")
